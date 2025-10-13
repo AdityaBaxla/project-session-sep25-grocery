@@ -1,5 +1,6 @@
-from .extensions import db
+from extensions import db
 from datetime import datetime, timezone
+from flask_security.core import UserMixin, RoleMixin
 
 class BaseModel(db.Model):
     __abstract__ = True # does not create table in db
@@ -7,13 +8,37 @@ class BaseModel(db.Model):
     created_at = db.Column(db.DateTime(timezone = True), default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime(timezone = True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
-class User(BaseModel):
+class User(BaseModel, UserMixin):
     name = db.Column(db.String, nullable = False)
     email = db.Column(db.String, nullable = False, unique=True)
     password = db.Column(db.String, nullable = False, unique=True)
 
+    # for flask-security-too
+    fs_uniquifier = db.Column(db.String, unique = True, nullable = False)
+    active = db.Column(db.Boolean, default = True) # if Active = False, then the user will not be able to login
+    roles = db.Relationship('Role', backref = 'bearers', secondary='user_roles')
 
     requests = db.relationship('Request', back_populates = 'user')
+
+class Role(BaseModel, RoleMixin):
+    name = db.Column(db.String, unique = True, nullable  = False) # admin, customer, manager
+    description = db.Column(db.String, nullable = False)
+
+class UserRoles(BaseModel):
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
+
+class Manger(BaseModel):
+    salary = db.Column(db.Integer)
+    address = db.Column(db.String)
+    department = db.Column(db.String)
+
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+class Customer(BaseModel):
+
+    loyalty_points = db.Column(db.Integer)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+
     
 class Request(BaseModel):
     """managers requests to modify / update things and then it will be shown to admin"""
