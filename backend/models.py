@@ -28,7 +28,7 @@ class UserRoles(BaseModel):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
 
-class Manger(BaseModel):
+class Manager(BaseModel):
     salary = db.Column(db.Integer)
     address = db.Column(db.String)
     department = db.Column(db.String)

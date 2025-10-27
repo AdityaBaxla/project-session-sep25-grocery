@@ -1,6 +1,7 @@
 from flask import Flask
 from config import LocalDevelopmentConfig
 from dotenv import load_dotenv
+from resources import auth_bp, api, api_bp
 
 def create_app():
 
@@ -19,6 +20,13 @@ def create_app():
     security.init_app(app, datastore = datastore, ) #register_blueprint=False
 
     app.datastore = datastore
+
+    # blueprint
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(api_bp)
+    # flask restful
+    # api.init_app(app)
+
 
     # for trial
     with app.app_context():
