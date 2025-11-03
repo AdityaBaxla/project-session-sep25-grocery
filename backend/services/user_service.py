@@ -1,15 +1,16 @@
-from models import Product, db
+from models import db, User
 from services.service_errors import ServiceError
 
-class ProductService():
+model = User
 
+class UserService():
     @staticmethod
     def get_all():
-        return Product.query.all()
+        return model.query.all()
     
     @staticmethod
     def get_by_id(id):
-        item = Product.query.get(id)
+        item = model.query.get(id)
         if not item:
             raise ServiceError("not found")
         return item
@@ -17,7 +18,7 @@ class ProductService():
     @staticmethod
     def create(data):
         # need checks if key is present in model (data validation check)
-        item = Product(**data)
+        item = model(**data)
         
         db.session.add(item)
         db.session.commit()
@@ -25,7 +26,7 @@ class ProductService():
 
     @staticmethod
     def delete(id):
-        item = Product.query.get(id)
+        item = model.query.get(id)
         if not item:
             raise ServiceError("not found")
         
@@ -36,7 +37,7 @@ class ProductService():
     @staticmethod
     def update(data):
         """{'id' : 1, 'name': 'abc'..}"""
-        item = Product.query.get(data["id"])
+        item = model.query.get(data["id"])
         if not item:
             raise ServiceError("not found")
         

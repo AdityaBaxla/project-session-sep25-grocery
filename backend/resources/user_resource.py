@@ -1,32 +1,33 @@
 from flask import jsonify, request
 from flask_restful import Resource, marshal, fields, marshal_with, reqparse
-from services import ProductService
+from services import UserService
 from .resource_utils import validate_date
-from .marshal_fields import product_fields
-
+from .marshal_fields import user_field   
+from flask_security import current_user
+from flask_security.decorators import roles_required
 
 
 parser = reqparse.RequestParser()
 parser.add_argument("name", type=str, required=True)
-parser.add_argument("price", type=float, required=True)
-parser.add_argument("stock", )
-parser.add_argument("mfd", type=validate_date  )
-parser.add_argument("expiry", type=validate_date)
-parser.add_argument("unit_of_sale")  
-parser.add_argument("section_id")
+parser.add_argument("email", type=str, required=True)
 
-marshal_fields = product_fields
-service = ProductService
-
+marshal_fields = user_field
+service = UserService
 
 """/api/product/:id"""
-class ProductResource(Resource):
+class UserResource(Resource):
     # @marshal_with(marshal_fields) either decorator or return function
+    # -> only admin
     def get(self, id):
+        if (current_user.has_role("manager") or current_user.has_role("customer") ) and current_user.id != id:
+            return {'message': "not authorized"}, 401
         item = service.get_by_id(id)
         return marshal(item, marshal_fields), 200
 
+    # -> admin / (customer / manager) own data
     def put(self, id):
+        if (current_user.has_role("manager") or current_user.has_role("customer") ) and current_user.id != id:
+            return {'message': "not authorized"}, 401
         item = service.get_by_id(id)
         if not item:
             return {"message" : "not found "}, 404
@@ -37,6 +38,8 @@ class ProductResource(Resource):
     
     def patch(self, id):
         item = service.get_by_id(id)
+        if (current_user.has_role("manager") or current_user.has_role("customer") ) and current_user.id != id:
+            return {'message': "not authorized"}, 401
         if not item:
             return {"message" : "not found "}, 404
         data = request.get_json()
@@ -45,6 +48,8 @@ class ProductResource(Resource):
         return marshal(item, marshal_fields), 200
     
     def delete(self, id):
+        if (current_user.has_role("manager") or current_user.has_role("customer") ) and current_user.id != id:
+            return {'message': "not authorized"}, 401
         item = service.get_by_id(id)
         if not item:
             return {"message" : "not found "}, 404
@@ -54,13 +59,14 @@ class ProductResource(Resource):
     
     
 """/api/product -> get, post""" 
-class ProductListResource(Resource):
+class UserListResource(Resource):
+    # admin only
+    @roles_required("admin")
     def get(self):
         items = service.get_all()
         return marshal(items, marshal_fields)
-    
-    def post(self):
-        args = parser.parse_args()
-        item = service.create(args)
-        return marshal(item, marshal_fields)
-        
+
+    # /user/:id/approve (only admin)
+def approve_user(id):
+    user = UserService.update({"active": True, "id": id})
+    return marshal(user, user_field)
