@@ -31,6 +31,7 @@ def login():
             "email": user.email,
             "name": user.name,
             "token": user.get_auth_token(),
+            "role": user.roles[0].name,
         }), 200
 
 
@@ -50,6 +51,7 @@ def register():
     if role == "manager":
         active = False
 
+
     datastore = current_app.datastore
 
     if User.query.filter_by(email = email).first():
@@ -68,6 +70,8 @@ def register():
         db.session.commit()
     except:
         return {"message" : "error"}, 400
+    
+
     
     return jsonify({
             "id": user.id,

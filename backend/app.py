@@ -2,6 +2,7 @@ from flask import Flask
 from config import LocalDevelopmentConfig
 from dotenv import load_dotenv
 from resources import auth_bp, api, api_bp
+from flask_cors import CORS
 
 def create_app():
 
@@ -12,6 +13,9 @@ def create_app():
     # connection for flask with flask_sqlalchemy
     from models import db, User, Role
     db.init_app(app)
+
+    # enable CORS
+    CORS(app, origins=["http://localhost:5173", "http://127.0.0.1:5173"] )
 
     # flask security stuff
     from flask_security.datastore import SQLAlchemyUserDatastore
