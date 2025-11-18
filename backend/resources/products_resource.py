@@ -3,6 +3,7 @@ from flask_restful import Resource, marshal, fields, marshal_with, reqparse
 from services import ProductService
 from .resource_utils import validate_date
 from .marshal_fields import product_fields
+from extensions import cache
 
 
 
@@ -22,6 +23,8 @@ service = ProductService
 """/api/product/:id"""
 class ProductResource(Resource):
     # @marshal_with(marshal_fields) either decorator or return function
+
+    @cache.memoize()
     def get(self, id):
         item = service.get_by_id(id)
         return marshal(item, marshal_fields), 200
@@ -33,6 +36,7 @@ class ProductResource(Resource):
         args = parser.parse_args()
         args["id"] = id
         item = service.update(args)
+        cache.delete_memoized(ProductResource.get, ProductResource, id)
         return marshal(item, marshal_fields)
     
     def patch(self, id):
@@ -55,6 +59,8 @@ class ProductResource(Resource):
     
 """/api/product -> get, post""" 
 class ProductListResource(Resource):
+
+    @cache.cached(key_prefix="product_get")
     def get(self):
         items = service.get_all()
         return marshal(items, marshal_fields)
@@ -62,5 +68,6 @@ class ProductListResource(Resource):
     def post(self):
         args = parser.parse_args()
         item = service.create(args)
+        cache.delete("product_get")
         return marshal(item, marshal_fields)
         
